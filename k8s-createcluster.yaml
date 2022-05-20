@@ -1,0 +1,38 @@
+# 1. Insert Control Plane IP address in "init controlplane" step below
+# 2. run: ansible-playbook k8s-createcluster.yaml --become --become-method=sudo --ask-become-pass
+# 3. Install a pod network, such as Calico-steps commented out below.
+- hosts: k8sControlPlane
+  tasks:
+  - name: update apt
+    command: apt update 
+  - name: remove containerd config file
+    command: rm /etc/containerd/config.toml  
+    ignore_errors: yes
+  - name: restart containerd 
+    command: systemctl restart containerd  
+  - name: init controlplane 
+    command: kubeadm init --cri-socket unix:///var/run/cri-dockerd.sock  --apiserver-advertise-address=<INSERT CP IP Address HERE> --pod-network-cidr=192.168.0.0/16 
+  - name: Create a user for kubernetes administration and copy kube config file. part 1
+    command: useradd kubeadmin
+  - name: Create a user for kubernetes administration and copy kube config file. part 2
+    command: mkdir /home/kubeadmin    
+  - name: Create a user for kubernetes administration and copy kube config file. part 3
+    command: mkdir /home/kubeadmin/.kube
+  - name: Create a user for kubernetes administration and copy kube config file. part 4
+    command: cp /etc/kubernetes/admin.conf /home/kubeadmin/.kube/config
+  - name: Create a user for kubernetes administration and copy kube config file. part 5
+    command: chown -R kubeadmin:kubeadmin /home/kubeadmin/.kube
+  - name: set KUBECONFIG variable
+    command: export KUBECONFIG=/etc/kubernetes/admin.conf
+    #switch to user kubeadmin BELOW ONLY
+  #- name: Install Calico part 1
+  #  command: kubectl create -f https://projectcalico.docs.tigera.io/manifests/tigera-operator.yaml
+  #- name: Install Calico part 2
+  #  command: kubectl create -f https://projectcalico.docs.tigera.io/manifests/custom-resources.yaml
+  # kubectl taint nodes --all node-role.kubernetes.io/master-
+#beaker19@protonmail.com
+
+
+
+
+

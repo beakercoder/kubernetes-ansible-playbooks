@@ -1,0 +1,107 @@
+# 1. ansadmin must be present on host machine 
+# 2. ansadmin must be part of sudoers 
+# 3. If AWS vm, password authentication needs to be enabled (nano /etc/ssh/sshd_config)
+#  3a. reboot vm
+# 4. copy ssh keys from ansible server to hosts
+# 5. Replace <Security Group here> and <AWS Access Key here> values below with your specs
+# 6. If you are running something other than Linux Jammy, you may need to change the linix flavor below in lineinfile step below
+# 7. run: ansible-playbook k8s-prereqs-dockerd-crio.yaml --become --become-method=sudo --ask-become-pass
+
+---
+- hosts: k8sControlPlane:k8sWorkers
+  tasks:
+  - name: update apt
+    command: apt update 
+  - name: add ec2 tools 
+    command: apt install ec2-api-tools -y
+    ignore_errors: yes
+ # port openings below only need to be ran one time, hence the ignore_errors flag
+  - name: open ports 6443 
+    command: ec2-authorize <Security Group here> -P tcp -p 6443 -s 0.0.0.0 --aws-access-key=<AWS Access Key here>
+    ignore_errors: yes
+  - name: open port 32750  
+    command: ec2-authorize <Security Group here> -P tcp -p 32750 -s 0.0.0.0 --aws-access-key=<AWS Access Key here>
+    ignore_errors: yes
+  - name: open port 10250  
+    command: ec2-authorize <Security Group here> -P tcp -p 10250 -s 0.0.0.0 --aws-access-key=<AWS Access Key here>
+    ignore_errors: yes
+  - name: open port 4443  
+    command: ec2-authorize <Security Group here> -P tcp -p 4443 -s 0.0.0.0 --aws-access-key=<AWS Access Key here>
+    ignore_errors: yes
+  - name: open port 443  
+    command: ec2-authorize <Security Group here> -P tcp -p 443 -s 0.0.0.0 --aws-access-key=<AWS Access Key here>
+    ignore_errors: yes
+  - name: open port 8080  
+    command: ec2-authorize <Security Group here> -P tcp -p 8080 -s 0.0.0.0 --aws-access-key=<AWS Access Key here>
+    ignore_errors: yes
+  - name: open port 179  
+    command: ec2-authorize <Security Group here> -P tcp -p 179 -s 0.0.0.0 --aws-access-key=<AWS Access Key here>
+    ignore_errors: yes
+  - name: disable swap 
+    command: swapoff -a 
+    ignore_errors: yes
+  - name: set for install of docker engine step 1    
+    command: apt update
+  - name: set for install of docker engine step 2 ca-certificates
+    command: apt install ca-certificates -y 
+    ignore_errors: yes
+  - name: set for install of docker engine step 2a apt-transport-https
+    command: apt install apt-transport-https -y 
+    ignore_errors: yes
+  - name: set for install of docker engine step 2b gnupg
+    command: apt install gnupg -y 
+    ignore_errors: yes
+  - name: set for install of docker engine step 2c lsb-release
+    command: apt install lsb-release -y 
+    ignore_errors: yes 
+  - name: set for install of docker engine step 2d software-properties-common
+    command: apt install software-properties-common -y 
+    ignore_errors: yes    
+  - name: set for install of docker engine step 2e curl
+    command: apt install curl -y 
+    ignore_errors: yes
+  - name: get gpg  
+    command: curl -fsSL https://download.docker.com/linux/ubuntu/gpg
+  - name: add gpg  
+    command: gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+  - lineinfile: 
+      path: /etc/apt/sources.list.d/docker.list
+      line: deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu jammy stable
+      create: yes
+  - name: set for install of docker engine step 5
+    command: apt update
+  - name: install docker engine docker-ce
+    command: apt install docker-ce -y 
+  - name: install docker engine containerd.io 
+    command: apt install containerd.io -y 
+  - name: install docker engine cdocker-compose-plugin 
+    command: apt install docker-compose-plugin -y 
+  - name: create directory 
+    command: mkdir -p /usr/local/bin
+    ignore_errors: yes
+  - name: install go 
+    command: apt install golang-go -y  
+  - name: clone cri dockerd git 
+    command: git clone https://github.com/Mirantis/cri-dockerd.git
+  - name: build dockerd  
+    command: go build -o ../bin/cri-dockerd
+    args: 
+     chdir: "/home/ansadmin/cri-dockerd/src"
+  - name: install cri-dockerd  
+    command: install -o root -g root -m 0755 bin/cri-dockerd /usr/local/bin/cri-dockerd
+    args: 
+     chdir: "/home/ansadmin/cri-dockerd/"
+  - name: ec2:Copy  cri-docker.service
+    command: cp -a /home/ansadmin/cri-dockerd/packaging/systemd/cri-docker.service /etc/systemd/system
+  - name: ec2:Copy  cri-docker.socket
+    command: cp -a /home/ansadmin/cri-dockerd/packaging/systemd/cri-docker.socket /etc/systemd/system
+  - name: run sed 
+    command: sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-docker.service
+  - name: reload daemon 
+    command: systemctl daemon-reload
+  - name: enable cri-docker.service
+    command: systemctl enable cri-docker.service
+  - name: enable enable --now cri-docker.socket
+    command: systemctl enable --now cri-docker.socket   
+#beaker19@protonmail.com
+

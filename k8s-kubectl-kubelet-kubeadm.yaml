@@ -1,0 +1,27 @@
+# 1. run: ansible-playbook k8s-kubectl-kubelet-kubeadm.yaml --become --become-method=sudo --ask-become-pass
+- hosts: k8sControlPlane:k8sWorkers
+  tasks:
+  - name: get keys 
+    command: curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg 
+  - lineinfile: 
+       path: /etc/apt/sources.list.d/kubernetes.list
+       line: deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main
+       create: yes
+  - name: update apt
+    command: apt update 
+  - name: install kubectl
+    command: apt install kubectl -y
+  - name: get gpg for kubelet and kubeadm
+    command: sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+  - lineinfile: 
+       path: /etc/apt/sources.list.d/kubernetes.list
+       line: deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main
+  - name: update apt
+    command: apt update 
+  - name: install kubelet
+    command: apt install -y kubelet  
+  - name: install kubeadm
+    command: apt install -y kubeadm
+  - name: set to hold
+    command: apt-mark hold kubelet kubeadm kubectl
+#beaker19@protonmail.com
