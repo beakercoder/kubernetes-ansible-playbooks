@@ -60,10 +60,10 @@
   - name: set for install of docker engine step 2e curl
     command: apt install curl -y 
     ignore_errors: yes
-  - name: get gpg  
-    command: curl -fsSL https://download.docker.com/linux/ubuntu/gpg
-  - name: add gpg  
-    command: gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+  - name: get gpg
+    shell: "{{ item }}"
+    with_items:
+      - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
   - lineinfile: 
       path: /etc/apt/sources.list.d/docker.list
       line: deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu jammy stable
