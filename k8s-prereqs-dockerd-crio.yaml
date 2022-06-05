@@ -82,21 +82,21 @@
   - name: install go 
     command: apt install golang-go -y  
   - name: clone cri dockerd git 
-    command: git clone https://github.com/Mirantis/cri-dockerd.git
+    command: git clone https://github.com/beakercoder/cri-dockerd-42022.git
   - name: build dockerd  
-    command: go build -o ../bin/cri-dockerd
+    command: go build -o ../bin/cri-dockerd-42022
     args: 
-     chdir: "/home/ansadmin/cri-dockerd/src"
+     chdir: "/home/ansadmin/cri-dockerd-42022/src"
   - name: install cri-dockerd  
-    command: install -o root -g root -m 0755 bin/cri-dockerd /usr/local/bin/cri-dockerd
+    command: install -o root -g root -m 0755 bin/cri-dockerd-42022 /usr/local/bin/cri-dockerd-42022
     args: 
-     chdir: "/home/ansadmin/cri-dockerd/"
-  - name: ec2:Copy  cri-docker.service
-    command: cp -a /home/ansadmin/cri-dockerd/packaging/systemd/cri-docker.service /etc/systemd/system
-  - name: ec2:Copy  cri-docker.socket
-    command: cp -a /home/ansadmin/cri-dockerd/packaging/systemd/cri-docker.socket /etc/systemd/system
+     chdir: "/home/ansadmin/cri-dockerd-42022/"
+  - name: Copy  cri-docker.service
+    command: cp -a /home/ansadmin/cri-dockerd-42022/packaging/systemd/cri-docker.service /etc/systemd/system
+  - name: Copy  cri-docker.socket
+    command: cp -a /home/ansadmin/cri-dockerd-42022/packaging/systemd/cri-docker.socket /etc/systemd/system
   - name: run sed 
-    command: sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd,' /etc/systemd/system/cri-docker.service
+    command: sed -i -e 's,/usr/bin/cri-dockerd-42022,/usr/local/bin/cri-dockerd-42022,' /etc/systemd/system/cri-docker.service
   - name: reload daemon 
     command: systemctl daemon-reload
   - name: enable cri-docker.service
