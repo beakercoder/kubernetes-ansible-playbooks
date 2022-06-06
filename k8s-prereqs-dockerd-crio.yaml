@@ -96,7 +96,7 @@
   - name: Copy  cri-docker.socket
     command: cp -a /home/ansadmin/cri-dockerd-42022/packaging/systemd/cri-docker.socket /etc/systemd/system
   - name: run sed 
-    command: sed -i -e 's,/usr/bin/cri-dockerd-42022,/usr/local/bin/cri-dockerd-42022,' /etc/systemd/system/cri-docker.service
+    command: sed -i -e 's,/usr/bin/cri-dockerd,/usr/local/bin/cri-dockerd-42022,' /etc/systemd/system/cri-docker.service
   - name: reload daemon 
     command: systemctl daemon-reload
   - name: enable cri-docker.service
